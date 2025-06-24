@@ -51,9 +51,12 @@ target_compile_definitions(us_sonar_v1 PRIVATE PICO_CYW43_ARCH_POLL)
 target_include_directories(us_sonar_v1 PRIVATE
         ${CMAKE_CURRENT_LIST_DIR}
 )
+
+add_subdirectory(mylib)
 target_link_libraries(us_sonar_v1
     pico_stdlib
     pico_cyw43_arch_lwip_poll
+    mylib
 )
 pico_add_extra_outputs(us_sonar_v1)
 

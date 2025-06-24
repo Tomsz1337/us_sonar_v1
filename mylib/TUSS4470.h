@@ -23,10 +23,6 @@ extern "C" {
 #define DEVICE_ID_addr          0x1D
 #define REV_ID_addr             0x1E
 
-// IO pins used by TUSS4470
-#define IO1_PIN                 0
-#define IO2_PIN                 7
-
 /// TUSS4470 settings structure
 typedef struct {
     SPI_Config TUSS4470_SPI_Config;  ///< SPI configuration

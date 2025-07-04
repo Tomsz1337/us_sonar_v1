@@ -13,12 +13,12 @@
 #include "hardware/uart.h"
 #include "mylib/adc_hal.h"
 
-#define WIFI_SSID "UniFi Network 2.4"
+#define AP_SSID "PICO_NET"
 #define WIFI_PASSWORD "test1234"
 #define DEST_IP_1   192
 #define DEST_IP_2   168
-#define DEST_IP_3   100
-#define DEST_IP_4   126
+#define DEST_IP_3   4
+#define DEST_IP_4   2
 #define DEST_PORT   5005
 
 #define NUM_SAMPLES 1000
@@ -66,16 +66,9 @@ int main() {
         return -1;
     }
 
-    cyw43_arch_enable_sta_mode();
+    cyw43_arch_enable_ap_mode(AP_SSID, WIFI_PASSWORD, CYW43_AUTH_WPA2_AES_PSK);
 
-    printf("Connecting to Wi-Fi...\n");
-    int err = cyw43_arch_wifi_connect_timeout_ms("UniFi Network 2.4", "test1234", CYW43_AUTH_WPA2_AES_PSK, 30000);
-    if(err) {
-        printf("Wi-Fi connect failed, error: %d\n", err);
-        return -1;
-    }
-
-    printf("Connected.\n");
+    IP4_ADDR(&dest_ip, DEST_IP_1, DEST_IP_2, DEST_IP_3, DEST_IP_4);
 
     udp = udp_new();
     if(!udp)

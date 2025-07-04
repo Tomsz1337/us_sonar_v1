@@ -5,14 +5,14 @@ import matplotlib.pyplot as plt
 import csv
 
 # Parametry UDP
-UDP_IP = "0.0.0.0"
-UDP_PORT = 5005
+UDP_IP = "0.0.0.0"     # nasłuchiwanie na wszystkich interfejsach
+UDP_PORT = 5005        # port zgodny z Pico W
 
 # Parametry wykresu
-num_samples = 1000    # liczba próbek na ramkę
-max_cols = 150        # liczba ramek na osi X wykresu
-speed_of_sound = 340  # m/s
-sample_time = 20e-6   # 20 us
+num_samples = 1000
+max_cols = 150
+speed_of_sound = 340
+sample_time = 20e-6
 sample_resolution = (speed_of_sound * sample_time * 100) / 2  # cm
 
 # Inicjalizacja danych
@@ -34,7 +34,7 @@ ax.set_ylabel('Distance (cm)')
 # Inicjalizacja gniazda
 sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 sock.bind((UDP_IP, UDP_PORT))
-print(f"Listening on UDP port {UDP_PORT}...")
+print(f"Listening for UDP packets on port {UDP_PORT}...")
 
 buffer = b""
 recording = False

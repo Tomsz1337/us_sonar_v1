@@ -66,7 +66,7 @@ def update():
     global buffer, recording, data
     try:
         while True:
-            data_in, addr = sock.recvfrom(2048)
+            data_in, address = sock.recvfrom(2048)
 
             if data_in.startswith(b"sp\n"):
                 buffer = b""

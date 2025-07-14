@@ -1,53 +1,19 @@
 #include <stdio.h>
+#include <stdint.h>
+
 #include "pico/stdlib.h"
 #include "pico/cyw43_arch.h"
+
 #include "lwip/udp.h"
 #include "lwip/ip_addr.h"
-#include <stdint.h>
-#include <stdio.h>
-#include "pico/stdlib.h"
+
 #include "mylib/TUSS4470.h"
 #include "mylib/spi_hal.h"
-#include "hardware/timer.h"
 #include "hardware/adc.h"
-#include "hardware/uart.h"
-#include "mylib/adc_hal.h"
-
-#define AP_SSID "PICO_NET"
-#define WIFI_PASSWORD "test1234"
-#define DEST_IP_1   192
-#define DEST_IP_2   168
-#define DEST_IP_3   4
-#define DEST_IP_4   2
-#define DEST_PORT   5005
+#include "mylib/wifi_hal.h"
 
 #define NUM_SAMPLES 1000
 #define FRQ_SEL_PIN 9
-
-struct udp_pcb* udp;
-ip_addr_t dest_ip;
-
-void udp_send_data(const char* msg) 
-{
-    struct pbuf* p = pbuf_alloc(PBUF_TRANSPORT, strlen(msg), PBUF_RAM);
-    if (!p) return;
-    memcpy(p->payload, msg, strlen(msg));
-
-    udp_sendto(udp, p, &dest_ip, DEST_PORT);
-    pbuf_free(p);
-}
-
-void udp_send_data_uint16(const uint16_t* data, size_t count) {
-    size_t data_len_bytes = count * sizeof(uint16_t);
-
-    struct pbuf* p = pbuf_alloc(PBUF_TRANSPORT, data_len_bytes, PBUF_RAM);
-    if (!p) return;
-
-    memcpy(p->payload, data, data_len_bytes);
-    udp_sendto(udp, p, &dest_ip, DEST_PORT);
-    pbuf_free(p);
-}
-
 
 TUSS4470_settings sSettings;
 uint8_t tx_buff[2];
@@ -59,27 +25,10 @@ volatile int sampleIndex = 0;
 
 int main() {
     stdio_init_all();
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    //UDP connenction config////////////////////////////////////////////////////////////////////////////////////////////////
-    if (cyw43_arch_init()) {
-        printf("Wi-Fi init failed\n");
-        return -1;
-    }
+    
+    udp_init_HAL();
 
-    cyw43_arch_enable_ap_mode(AP_SSID, WIFI_PASSWORD, CYW43_AUTH_WPA2_AES_PSK);
-
-    IP4_ADDR(&dest_ip, DEST_IP_1, DEST_IP_2, DEST_IP_3, DEST_IP_4);
-
-    udp = udp_new();
-    if(!udp)
-    {
-        printf("Failed to create UDP PCB\n");
-        return -1;
-    }
-    IP4_ADDR(&dest_ip, DEST_IP_1, DEST_IP_2, DEST_IP_3, DEST_IP_4);
-    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //TUSS4470 config////////////////////////////////////////////////////////////////////////////////////////////////////////
-
     adc_init();
     adc_gpio_init(26);
     adc_select_input(0);
@@ -105,7 +54,7 @@ int main() {
 
     if(modeSelect)
     {
-        sSettings.BPF_CONFIG_1 = 0x1D;
+        sSettings.BPF_CONFIG_1 = 0x1F;
         sSettings.freqHz = 200000;
     }
     else
@@ -137,9 +86,9 @@ int main() {
             analogValues[sampleIndex] = adc_read();
             sleep_us(20);
         }
-        udp_send_data("sp\n");  
-        udp_send_data_uint16(analogValues, NUM_SAMPLES); 
-        udp_send_data("\n");
+        udp_send_data_HAL("sp\n");  
+        udp_send_data_uint16_HAL(analogValues, NUM_SAMPLES); 
+        udp_send_data_HAL("\n");
         sleep_ms(100);
     }
     return 1;

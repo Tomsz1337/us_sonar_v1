@@ -24,14 +24,14 @@ app = QtWidgets.QApplication([])
 win = pg.GraphicsLayoutWidget(title="Waterfall Live")
 win.show()
 
-win.addLabel("Waterfall Live - Sample Resolution: {:.2f} cm".format(sample_resolution), col=0, colspan=1)
+win.addLabel("Waterfall Live - Sample Resolution: {:.2f} cm".format(sample_resolution * 100), col=0, colspan=1)
 
 plot = win.addPlot()
 img = pg.ImageItem()
 plot.addItem(img)
 
 plot.setLabel('bottom', 'Frame')
-plot.setLabel('left', 'Distance (cm)')
+plot.setLabel('left', 'Distance (m)')
 
 # Kolory i zakres
 img.setLookupTable(pg.colormap.get('viridis').getLookupTable(0.0, 1.0, 256))

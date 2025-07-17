@@ -17,10 +17,10 @@ void pulse_gen_program_init(PIO_settings *sPIO,uint32_t freqHz, uint pin)
     pio_sm_init(sPIO->pio, sPIO->sm, offset, &c);
 }
 
-void pulse_gen_start(PIO pio, uint sm, uint32_t nPulses) {
-    pio_sm_set_enabled(pio, sm, false);
-    pio_sm_clear_fifos(pio, sm);
-    pio_sm_restart(pio, sm);
-    pio_sm_put_blocking(pio, sm, nPulses - 1);
-    pio_sm_set_enabled(pio, sm, true);
+void pulse_gen_start(PIO_settings *sPIO, uint32_t nPulses) {
+    pio_sm_set_enabled(sPIO->pio, sPIO->sm, false);
+    pio_sm_clear_fifos(sPIO->pio, sPIO->sm);
+    pio_sm_restart(sPIO->pio, sPIO->sm);
+    pio_sm_put_blocking(sPIO->pio, sPIO->sm, nPulses - 1);
+    pio_sm_set_enabled(sPIO->pio, sPIO->sm, true);
 }

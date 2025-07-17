@@ -14,7 +14,7 @@ num_samples = 1000    # liczba próbek na ramkę
 max_cols = 300        # liczba ramek na osi X wykresu
 speed_of_sound = 340  # m/s
 sample_time = 20e-6   # 20 us
-sample_resolution = (speed_of_sound * sample_time * 100) / 2  # cm
+sample_resolution = (speed_of_sound * sample_time) / 2
 
 # Inicjalizacja danych
 data = np.zeros((num_samples, max_cols), dtype=np.uint16)
@@ -24,28 +24,22 @@ app = QtWidgets.QApplication([])
 win = pg.GraphicsLayoutWidget(title="Waterfall Live")
 win.show()
 
-# Dodaj tytuł
 win.addLabel("Waterfall Live - Sample Resolution: {:.2f} cm".format(sample_resolution), col=0, colspan=1)
 
-# Dodaj wykres z osiami
 plot = win.addPlot()
 img = pg.ImageItem()
 plot.addItem(img)
 
-# Oś X i Y
 plot.setLabel('bottom', 'Frame')
 plot.setLabel('left', 'Distance (cm)')
 
 # Kolory i zakres
-
 img.setLookupTable(pg.colormap.get('viridis').getLookupTable(0.0, 1.0, 256))
 img.setLevels([0, 2000])
 
 # Oś Y: odległości
-yticks = [(i, f'{i * sample_resolution:.1f}') for i in range(0, num_samples, 50)]
+yticks = [(i, f'{i * sample_resolution:.1f}') for i in range(0, num_samples, 35)]
 plot.getAxis('left').setTicks([yticks])
-
-# Skala odwrotna Y (jak w sonarze: małe odległości na górze)
 plot.invertY(True)
 
 # Inicjalizacja gniazda

@@ -24,8 +24,7 @@ volatile int pulseCount = 0;
 volatile int sampleIndex = 0;
 
 int main() {
-    stdio_init_all();
-    
+    stdio_init_all(); 
     udp_init_HAL();
 
     //TUSS4470 config////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -54,7 +53,7 @@ int main() {
 
     if(modeSelect)
     {
-        sSettings.BPF_CONFIG_1 = 0x1F;
+        sSettings.BPF_CONFIG_1 = 0x1D;
         sSettings.freqHz = 200000;
     }
     else

@@ -1,7 +1,7 @@
 #ifndef __LWIPOPTS_H__
 #define __LWIPOPTS_H__
 
-#define NO_SYS                      1
+#define NO_SYS                      0
 #define LWIP_SOCKET                 0
 #define LWIP_NETCONN                0
 #define LWIP_RAW                    1
@@ -10,6 +10,8 @@
 #define LWIP_TCP                    1
 #define LWIP_DNS                    1
 #define LWIP_DHCP                   1
+
+#define SYS_LIGHTWEIGHT_PROT        1
 
 #define MEM_LIBC_MALLOC             1
 #define MEM_ALIGNMENT               4

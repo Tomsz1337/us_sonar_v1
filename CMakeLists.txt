@@ -24,9 +24,11 @@ if (EXISTS ${picoVscode})
 endif()
 # ====================================================================================
 set(PICO_BOARD pico_w CACHE STRING "Board type")
+set(FREERTOS_KERNEL_PATH ${CMAKE_CURRENT_SOURCE_DIR}/FreeRTOS-Kernel)
 
 # Pull in Raspberry Pi Pico SDK (must be before project)
 include(pico_sdk_import.cmake)
+include(${FREERTOS_KERNEL_PATH}/portable/ThirdParty/GCC/RP2040/FreeRTOS_Kernel_import.cmake)
 
 project(us_sonar_v1 C CXX ASM)
 
@@ -49,10 +51,11 @@ target_include_directories(us_sonar_v1 PRIVATE
         ${CMAKE_CURRENT_LIST_DIR}
 )
 
-add_subdirectory(mylib)
+add_subdirectory(hardware_drivers)
 target_link_libraries(us_sonar_v1
     pico_stdlib
-    mylib
+    hardware_drivers
+    FreeRTOS-Kernel-Heap4
 )
 pico_add_extra_outputs(us_sonar_v1)
 

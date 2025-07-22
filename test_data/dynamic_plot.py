@@ -66,7 +66,7 @@ def update_image():
         start = max(0, end - max_cols)
     view_data = data[start:end]
     if view_data.shape[0] < max_cols:
-        padding = np.zeros((max_cols - view_data.shape[0], num_samples))
+        padding = np.zeros((max_cols - view_data.shape[0], 10))
         view_data = np.vstack((padding, view_data))
     img.setImage(view_data, autoLevels=False)
     img.setLevels([np.min(data), np.max(data)])

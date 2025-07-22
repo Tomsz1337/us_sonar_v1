@@ -30,7 +30,7 @@ plot = win.addPlot()
 img = pg.ImageItem()
 plot.addItem(img)
 
-plot.setLabel('bottom', 'Frame')
+plot.setLabel('bottom', 'Time (Frames)')
 plot.setLabel('left', 'Distance (m)')
 
 # Kolory i zakres

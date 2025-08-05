@@ -16,7 +16,7 @@ SAMPLE_RESOLUTION = (SPEED_OF_SOUND * SAMPLE_TIME) / 2  # Metry / próbkę
 
 
 # =========================
-# FUNKCJA: Wczytaj dane z CSV
+# READ CSV DATA
 # =========================
 def load_data(filename, expected_length):
     data = []
@@ -27,9 +27,16 @@ def load_data(filename, expected_length):
                 data.append([int(val) for val in row])
     return np.array(data)
 
+# =========================
+# FUNCTION: Apply TVG
+# =========================
+def apply_tvg(data, gain_factor=1.0):
+    # Create a gain vector that increases linearly with depth (sample index)
+    gain_vector = np.linspace(1.0, gain_factor, data.shape[0])
+    return data * gain_vector[:, np.newaxis]
 
 # =========================
-# FUNKCJA: Ustaw znaczniki Y
+# SET Y TICKS
 # =========================
 def update_yticks(axis, num_ticks):
     yticks = [(i * SAMPLE_RESOLUTION, f'{i * SAMPLE_RESOLUTION:.1f}')
@@ -38,7 +45,7 @@ def update_yticks(axis, num_ticks):
 
 
 # =========================
-# FUNKCJA: Aktualizacja markera
+# UPDATE MARKER
 # =========================
 def update_marker_label():
     y_val = marker.value()
@@ -47,16 +54,19 @@ def update_marker_label():
 
 
 # =========================
-# FUNKCJA: Aktualizacja obrazu
+# UPDATE IMAGE
 # =========================
 def update_image():
     start = slider_x.value()
     end = start + MAX_COLS
     end = min(end, data.shape[0])
     start = max(0, end - MAX_COLS)
+    
+    gain_val = slider_tvg.value() / 10.0  # np. 20 → 2.0x
+    data2 = apply_tvg(data.T, gain_val).T
 
     visible_samples = slider_y.value()
-    view_data = data[start:end]
+    view_data = data2[start:end]
 
     if view_data.shape[0] < MAX_COLS:
         padding = np.zeros((MAX_COLS - view_data.shape[0], NUM_SAMPLES))
@@ -73,12 +83,12 @@ def update_image():
 
 
 # =========================
-# GŁÓWNA CZĘŚĆ APLIKACJI
+# MAIN APP
 # =========================
-# Wczytaj dane
+# Read data
 data = load_data(CSV_FILENAME, NUM_SAMPLES)
 
-# Inicjalizacja aplikacji
+# app init
 app = QtWidgets.QApplication(sys.argv)
 main_win = QtWidgets.QMainWindow()
 central_widget = QtWidgets.QWidget()
@@ -86,27 +96,27 @@ main_layout = QtWidgets.QVBoxLayout()
 central_widget.setLayout(main_layout)
 main_win.setCentralWidget(central_widget)
 
-# Tworzenie wykresu
+#  plot
 graphics_layout = pg.GraphicsLayoutWidget()
 plot = graphics_layout.addPlot()
 plot.invertY(True)
 plot.setLabel('bottom', 'Time (Frames)')
 plot.setLabel('left', 'Distance (m)')
 
-# Dodaj obraz
+# add image
 img = pg.ImageItem()
 cmap = pg.colormap.get('viridis')
 img.setLookupTable(cmap.getLookupTable(0.0, 1.0, 256))
 plot.addItem(img)
 
-# Marker + etykieta
+# Marker + label
 marker = pg.InfiniteLine(angle=0, movable=True, pen=pg.mkPen('r', width=1))
 label = pg.TextItem(color='r', anchor=(1, 1))
 plot.addItem(marker)
 plot.addItem(label)
 marker.sigPositionChanged.connect(update_marker_label)
 
-# Slidery
+# Sliders
 slider_x = QtWidgets.QSlider(QtCore.Qt.Horizontal)
 slider_x.setMinimum(0)
 slider_x.setMaximum(max(0, data.shape[0] - MAX_COLS))
@@ -117,10 +127,20 @@ slider_y.setMinimum(10)
 slider_y.setMaximum(NUM_SAMPLES)
 slider_y.setValue(NUM_SAMPLES)
 
+slider_tvg = QtWidgets.QSlider(QtCore.Qt.Horizontal)
+slider_tvg.setMinimum(10)   # 1.0x (10 / 10)
+slider_tvg.setMaximum(50)   # 5.0x (50 / 10)
+slider_tvg.setValue(20)     # Domyślnie 2.0x
+
 slider_x.valueChanged.connect(update_image)
 slider_y.valueChanged.connect(update_image)
+slider_tvg.valueChanged.connect(update_image)
 
-# Layout wykresu i sliderów
+# Buttons
+tvg_lin_button = QtWidgets.QPushButton('test')
+
+
+# Plot and marker layout
 hlayout = QtWidgets.QHBoxLayout()
 vlayout = QtWidgets.QVBoxLayout()
 vlayout.addWidget(graphics_layout)
@@ -128,15 +148,18 @@ vlayout.addWidget(slider_x)
 hlayout.addLayout(vlayout)
 hlayout.addWidget(slider_y)
 main_layout.addLayout(hlayout)
+main_layout.addWidget(QtWidgets.QLabel("TVG Gain"))
+main_layout.addWidget(slider_tvg)
+main_layout.addWidget(tvg_lin_button)
 
-# Ustawienia okna
+# window settings
 main_win.setWindowTitle("Waterfall plot")
 main_win.resize(1000, 500)
 main_win.show()
 
-# Początkowe wartości
+# initial values
 marker.setValue(0.0)
 update_image()
 
-# Start aplikacji
+# app start
 sys.exit(app.exec())

@@ -57,6 +57,6 @@ void TUSS4470_trigger(TUSS4470_settings *sSettings, uint8_t *tx_buff)
 {
 	TUSS4470_write(sSettings, 0x1B, 0x01, tx_buff); 
     pulse_gen_start(&sSettings->sPIO, sSettings->nPulses);
-    sleep_us(200);
+    sleep_us(100);
     TUSS4470_write(sSettings, 0x1B, 0x00, tx_buff); 
 }

@@ -7,10 +7,10 @@ import sys
 # =========================
 # PARAMETRY KONFIGURACJI
 # =========================
-CSV_FILENAME = 'test4.csv'
+CSV_FILENAME = 'recorded_data_006.csv'
 NUM_SAMPLES = 1000
-MAX_COLS = 150
-SAMPLE_TIME = 20e-6  # 20 µs
+MAX_COLS = 300
+SAMPLE_TIME = 22e-6  # 20 µs
 SPEED_OF_SOUND = 340  # m/s
 SAMPLE_RESOLUTION = (SPEED_OF_SOUND * SAMPLE_TIME) / 2  # Metry / próbkę
 
@@ -40,7 +40,7 @@ def apply_tvg(data, gain_factor=1.0):
 # =========================
 def update_yticks(axis, num_ticks):
     yticks = [(i * SAMPLE_RESOLUTION, f'{i * SAMPLE_RESOLUTION:.1f}')
-              for i in range(0, num_ticks, 35)]
+              for i in range(0, num_ticks, 20)]
     axis.setTicks([yticks])
 
 
@@ -76,8 +76,8 @@ def update_image():
 
     img.setImage(view_data, autoLevels=False)
     img.setLevels([np.min(data), np.max(data)])
-    img.setRect(QtCore.QRectF(0, 0, MAX_COLS, visible_samples * SAMPLE_RESOLUTION))
-
+    num_visible_samples = view_data.shape[1]
+    img.setRect(QtCore.QRectF(0, 0, MAX_COLS, num_visible_samples * SAMPLE_RESOLUTION))
     update_yticks(plot.getAxis('left'), visible_samples)
     update_marker_label()
 
@@ -107,6 +107,7 @@ plot.setLabel('left', 'Distance (m)')
 img = pg.ImageItem()
 cmap = pg.colormap.get('viridis')
 img.setLookupTable(cmap.getLookupTable(0.0, 1.0, 256))
+img.setLevels([0, 2000])
 plot.addItem(img)
 
 # Marker + label
@@ -154,7 +155,7 @@ main_layout.addWidget(tvg_lin_button)
 
 # window settings
 main_win.setWindowTitle("Waterfall plot")
-main_win.resize(1000, 500)
+
 main_win.show()
 
 # initial values

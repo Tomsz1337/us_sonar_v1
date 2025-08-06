@@ -14,8 +14,9 @@ UDP_PORT = 5005
 # Parametry wykresu
 num_samples = 1000    # liczba próbek na ramkę
 max_cols = 300        # liczba ramek na osi X wykresu
-speed_of_sound = 1430  # m/s
-sample_time = 20e-6   # 20 us
+speed_of_sound = 340  # m/s
+offset = 3e-6
+sample_time = 20e-6 + offset  # 20 us
 sample_resolution = (speed_of_sound * sample_time) / 2
 
 # Inicjalizacja danych
@@ -52,6 +53,21 @@ slider_y = QtWidgets.QSlider(QtCore.Qt.Vertical)
 slider_y.setMinimum(10)
 slider_y.setMaximum(num_samples)
 slider_y.setValue(num_samples)
+
+# marker
+def update_marker_label():
+    y_idx = marker.value()
+    y_meters = y_idx * sample_resolution
+    label.setText(f"Y = {y_meters:.2f} m")
+    label.setPos(max_cols, y_idx)
+
+
+marker = pg.InfiniteLine(angle=0, movable=True, pen=pg.mkPen('r', width=1))
+label = pg.TextItem(color='r', anchor=(1, 1))
+plot.addItem(marker)
+plot.addItem(label)
+marker.sigPositionChanged.connect(update_marker_label)
+
 # przycisk do zapisu png
 save_button = QtWidgets.QPushButton("Save PNG")
 
@@ -81,7 +97,19 @@ buffer = b""
 recording = False
 
 # CSV
-csvfile = open("recorded_data.csv", "w", newline="")
+def csv_filename():
+    base_name = "recorded_data"
+    ext = ".csv"
+    i = 1
+
+    while True:
+        filename = f"{base_name}_{i:03d}{ext}"
+        if not os.path.exists(filename):
+            break
+        i += 1
+    return filename
+
+csvfile = open(csv_filename(), "w", newline="")
 writer = csv.writer(csvfile)
 
 # aktualizacja obrazu
@@ -121,13 +149,15 @@ def update():
                 
                 view_data = data.T[:, :visible_samples]
                 img.setImage(view_data, autoLevels=False)
+                update_marker_label()
 
             elif recording:
                 buffer += data_in
-
+            
     except BlockingIOError:
         pass
 
+marker.setValue(0.0)
 slider_y.valueChanged.connect(update)
 save_button.clicked.connect(save_image)
 main_layout.addWidget(slider_y)

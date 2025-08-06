@@ -79,7 +79,6 @@ int main() {
         cyw43_arch_poll(); 
         sampleIndex = 0;
         TUSS4470_trigger(&sSettings, tx_buff);
-        sleep_us(20);
         for (sampleIndex = 0; sampleIndex < NUM_SAMPLES; sampleIndex++) 
         {
             analogValues[sampleIndex] = adc_read();

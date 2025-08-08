@@ -7,11 +7,11 @@ import sys
 # =========================
 # PARAMETRY KONFIGURACJI
 # =========================
-CSV_FILENAME = 'recorded_data_006.csv'
+CSV_FILENAME = '200_10_obiekt.csv'
 NUM_SAMPLES = 1000
 MAX_COLS = 300
 SAMPLE_TIME = 22e-6  # 20 µs
-SPEED_OF_SOUND = 340  # m/s
+SPEED_OF_SOUND = 1480  # m/s
 SAMPLE_RESOLUTION = (SPEED_OF_SOUND * SAMPLE_TIME) / 2  # Metry / próbkę
 
 
@@ -40,7 +40,7 @@ def apply_tvg(data, gain_factor=1.0):
 # =========================
 def update_yticks(axis, num_ticks):
     yticks = [(i * SAMPLE_RESOLUTION, f'{i * SAMPLE_RESOLUTION:.1f}')
-              for i in range(0, num_ticks, 20)]
+              for i in range(0, num_ticks, 35)]
     axis.setTicks([yticks])
 
 

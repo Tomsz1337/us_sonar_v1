@@ -7,10 +7,10 @@ import sys
 # =========================
 # PARAMETRY KONFIGURACJI
 # =========================
-CSV_FILENAME = '200_10_obiekt.csv'
+CSV_FILENAME = 'recorded_data_002.csv'
 NUM_SAMPLES = 1000
 MAX_COLS = 300
-SAMPLE_TIME = 22e-6  # 20 µs
+SAMPLE_TIME = 20e-6  # 20 µs
 SPEED_OF_SOUND = 1480  # m/s
 SAMPLE_RESOLUTION = (SPEED_OF_SOUND * SAMPLE_TIME) / 2  # Metry / próbkę
 

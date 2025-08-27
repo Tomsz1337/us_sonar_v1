@@ -53,17 +53,15 @@ int main() {
 
     if(modeSelect)
     {
-        sSettings.BPF_CONFIG_1 = 0x1D;
-        sSettings.freqHz = 200000;
+        sSettings.VDRV_CTRL = 0x08;
     }
     else
     {
-        sSettings.BPF_CONFIG_1 = 0x09;
-        sSettings.freqHz = 40000;     
+        sSettings.VDRV_CTRL = 0x00;    
     }     
-    
+    sSettings.BPF_CONFIG_1 = 0x1D;
+    sSettings.freqHz = 200000;
     sSettings.DEV_CTRL_2 = 0x00;
-    sSettings.VDRV_CTRL = 0x0f;
     sSettings.BURST_PULSE = 0x08;
     sSettings.ECHO_INT_CONFIG = 0x19;
 

@@ -14,7 +14,7 @@ UDP_PORT = 5005
 # Parametry wykresu
 num_samples = 1000    # liczba próbek na ramkę
 max_cols = 300        # liczba ramek na osi X wykresu
-speed_of_sound = 1480  # m/s
+speed_of_sound = 340  # m/s
 offset = 0e-6
 sample_time = 20e-6 + offset  # 20 us
 sample_resolution = (speed_of_sound * sample_time) / 2

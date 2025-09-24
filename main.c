@@ -11,6 +11,7 @@
 #include "mylib/spi_hal.h"
 #include "hardware/adc.h"
 #include "mylib/wifi_hal.h"
+#include "hardware/dma.h"
 
 #define NUM_SAMPLES 1000
 #define FRQ_SEL_PIN 9
@@ -19,7 +20,7 @@ TUSS4470_settings sSettings;
 uint8_t tx_buff[2];
 uint8_t rx_buff[2];
 
-uint16_t analogValues[NUM_SAMPLES];
+uint16_t captureBuffer[NUM_SAMPLES];
 volatile int pulseCount = 0;
 volatile int sampleIndex = 0;
 
@@ -28,10 +29,6 @@ int main() {
     udp_init_HAL();
 
     //TUSS4470 config////////////////////////////////////////////////////////////////////////////////////////////////////////
-    adc_init();
-    adc_gpio_init(26);
-    adc_select_input(0);
-
     gpio_init(FRQ_SEL_PIN);
     gpio_set_input_enabled(FRQ_SEL_PIN, 1);
     gpio_pull_up(FRQ_SEL_PIN);
@@ -53,7 +50,7 @@ int main() {
 
     if(modeSelect)
     {
-        sSettings.VDRV_CTRL = 0x08;
+        sSettings.VDRV_CTRL = 0x0A;
     }
     else
     {
@@ -70,20 +67,40 @@ int main() {
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+    //ADC setup////
+    adc_init();
+    adc_gpio_init(26);
+    adc_select_input(0);
+    adc_fifo_setup(true, true, 1, false, false);
+
+    float clkdiv = 48000000.0f / 50000.0f - 96; 
+    adc_set_clkdiv(clkdiv);
+
+    //DMA setup////
+    uint dma_channel = dma_claim_unused_channel(true);
+    dma_channel_config dmaCfg = dma_channel_get_default_config(dma_channel);
+
+    channel_config_set_transfer_data_size(&dmaCfg, DMA_SIZE_16);
+    channel_config_set_read_increment(&dmaCfg, false);
+    channel_config_set_write_increment(&dmaCfg, true);
+
+    channel_config_set_dreq(&dmaCfg, DREQ_ADC);
+    
+
     sleep_ms(1000);
 
     while(1) 
     {  
         cyw43_arch_poll(); 
-        sampleIndex = 0;
+        dma_channel_configure(dma_channel, &dmaCfg, captureBuffer, &adc_hw->fifo, NUM_SAMPLES, false);
         TUSS4470_trigger(&sSettings, tx_buff);
-        for (sampleIndex = 0; sampleIndex < NUM_SAMPLES; sampleIndex++) 
-        {
-            analogValues[sampleIndex] = adc_read();
-            sleep_us(20);
-        }
+        dma_channel_start(dma_channel);
+        adc_run(true);
+        dma_channel_wait_for_finish_blocking(dma_channel);
+        adc_run(false);
+        adc_fifo_drain();
         udp_send_data_HAL("sp\n");  
-        udp_send_data_uint16_HAL(analogValues, NUM_SAMPLES); 
+        udp_send_data_uint16_HAL(captureBuffer, NUM_SAMPLES); 
         udp_send_data_HAL("\n");
         sleep_ms(100);
     }

@@ -7,7 +7,7 @@ import sys
 # =========================
 # PARAMETRY KONFIGURACJI
 # =========================
-CSV_FILENAME = 'recorded_data_002.csv'
+CSV_FILENAME = 'recorded_data_003.csv'
 NUM_SAMPLES = 1000
 MAX_COLS = 300
 SAMPLE_TIME = 20e-6  # 20 µs

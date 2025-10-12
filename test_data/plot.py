@@ -12,7 +12,11 @@ NUM_SAMPLES = 1000
 MAX_COLS = 300
 SAMPLE_TIME = 20e-6  # 20 µs
 SPEED_OF_SOUND = 1480  # m/s
-SAMPLE_RESOLUTION = (SPEED_OF_SOUND * SAMPLE_TIME) / 2  # Metry / próbkę
+SAMPLE_RESOLUTION = (SPEED_OF_SOUND * SAMPLE_TIME) / 2  
+
+COLOR_LEVEL_MIN = 0
+COLOR_LEVEL_MAX = 2000
+
 
 
 # =========================
@@ -31,7 +35,7 @@ def load_data(filename, expected_length):
 # FUNCTION: Apply TVG
 # =========================
 def apply_tvg(data, gain_factor=1.0):
-    # Create a gain vector that increases linearly with depth (sample index)
+    
     gain_vector = np.linspace(1.0, gain_factor, data.shape[0])
     return data * gain_vector[:, np.newaxis]
 
@@ -62,6 +66,9 @@ def update_image():
     end = min(end, data.shape[0])
     start = max(0, end - MAX_COLS)
     
+    levelLO = slider_rangeL.value()
+    levelHI = slider_rangeH.value()
+
     gain_val = slider_tvg.value() / 10.0  # np. 20 → 2.0x
     data2 = apply_tvg(data.T, gain_val).T
 
@@ -75,7 +82,7 @@ def update_image():
     view_data = view_data[:, :visible_samples]
 
     img.setImage(view_data, autoLevels=False)
-    img.setLevels([np.min(data), np.max(data)])
+    img.setLevels([levelLO, levelHI])
     num_visible_samples = view_data.shape[1]
     img.setRect(QtCore.QRectF(0, 0, MAX_COLS, num_visible_samples * SAMPLE_RESOLUTION))
     update_yticks(plot.getAxis('left'), visible_samples)
@@ -99,6 +106,8 @@ main_win.setCentralWidget(central_widget)
 #  plot
 graphics_layout = pg.GraphicsLayoutWidget()
 plot = graphics_layout.addPlot()
+xticks = [(i, str(i - MAX_COLS)) for i in range(0, MAX_COLS + 1, 50)]
+plot.getAxis('bottom').setTicks([xticks])
 plot.invertY(True)
 plot.setLabel('bottom', 'Time (Frames)')
 plot.setLabel('left', 'Distance (m)')
@@ -107,7 +116,7 @@ plot.setLabel('left', 'Distance (m)')
 img = pg.ImageItem()
 cmap = pg.colormap.get('viridis')
 img.setLookupTable(cmap.getLookupTable(0.0, 1.0, 256))
-img.setLevels([0, 2000])
+img.setLevels([COLOR_LEVEL_MIN, COLOR_LEVEL_MAX])
 plot.addItem(img)
 
 # Marker + label
@@ -129,16 +138,43 @@ slider_y.setMaximum(NUM_SAMPLES)
 slider_y.setValue(NUM_SAMPLES)
 
 slider_tvg = QtWidgets.QSlider(QtCore.Qt.Horizontal)
-slider_tvg.setMinimum(10)   # 1.0x (10 / 10)
-slider_tvg.setMaximum(50)   # 5.0x (50 / 10)
-slider_tvg.setValue(20)     # Domyślnie 2.0x
+slider_tvg.setMinimum(10)   
+slider_tvg.setMaximum(50)   
+slider_tvg.setValue(10)     
 
 slider_x.valueChanged.connect(update_image)
 slider_y.valueChanged.connect(update_image)
 slider_tvg.valueChanged.connect(update_image)
 
-# Buttons
-tvg_lin_button = QtWidgets.QPushButton('test')
+slider_rangeH_layout = QtWidgets.QVBoxLayout()
+slider_rangeH_label = QtWidgets.QLabel("Level\nHI")
+slider_rangeH_label.setAlignment(QtCore.Qt.AlignCenter)
+
+slider_rangeH = QtWidgets.QSlider(QtCore.Qt.Vertical)
+slider_rangeH.setMinimum(int(COLOR_LEVEL_MAX / 2))
+slider_rangeH.setMaximum(COLOR_LEVEL_MAX)
+slider_rangeH.setValue(COLOR_LEVEL_MAX)
+
+slider_rangeH.valueChanged.connect(update_image)
+
+slider_rangeH_layout.addWidget(slider_rangeH_label)
+slider_rangeH_layout.addWidget(slider_rangeH)
+
+
+slider_rangeL_layout = QtWidgets.QVBoxLayout()
+slider_rangeL_label = QtWidgets.QLabel("Level\nLO")
+slider_rangeL_label.setAlignment(QtCore.Qt.AlignCenter)
+
+slider_rangeL = QtWidgets.QSlider(QtCore.Qt.Vertical)
+slider_rangeL.setMinimum(COLOR_LEVEL_MIN)
+slider_rangeL.setMaximum(int(COLOR_LEVEL_MAX / 2))
+slider_rangeL.setValue(COLOR_LEVEL_MIN)
+
+slider_rangeL.valueChanged.connect(update_image)
+
+slider_rangeL_layout.addWidget(slider_rangeL_label)
+slider_rangeL_layout.addWidget(slider_rangeL)
+
 
 
 # Plot and marker layout
@@ -151,7 +187,8 @@ hlayout.addWidget(slider_y)
 main_layout.addLayout(hlayout)
 main_layout.addWidget(QtWidgets.QLabel("TVG Gain"))
 main_layout.addWidget(slider_tvg)
-main_layout.addWidget(tvg_lin_button)
+hlayout.addWidget(slider_rangeH)
+hlayout.addWidget(slider_rangeL)
 
 # window settings
 main_win.setWindowTitle("Waterfall plot")

@@ -21,20 +21,14 @@ uint8_t tx_buff[2];
 uint8_t rx_buff[2];
 
 uint16_t captureBuffer[NUM_SAMPLES];
-volatile int pulseCount = 0;
-volatile int sampleIndex = 0;
+
 
 int main() {
     stdio_init_all(); 
     udp_init_HAL();
 
     //TUSS4470 config////////////////////////////////////////////////////////////////////////////////////////////////////////
-    gpio_init(FRQ_SEL_PIN);
-    gpio_set_input_enabled(FRQ_SEL_PIN, 1);
-    gpio_pull_up(FRQ_SEL_PIN);
-    sleep_ms(10);
-    bool modeSelect = gpio_get(FRQ_SEL_PIN);
-
+    
     tx_buff[0] = 0x00;
     tx_buff[1] = 0x00;
 
@@ -46,20 +40,13 @@ int main() {
     sSettings.TUSS4470_SPI_Config.spi = spi0;
 
     sSettings.burstPin = 18;
-    sSettings.nPulses = 8;
+    sSettings.nPulses = 16;
 
-    if(modeSelect)
-    {
-        sSettings.VDRV_CTRL = 0x0A;
-    }
-    else
-    {
-        sSettings.VDRV_CTRL = 0x00;    
-    }     
+    sSettings.VDRV_CTRL = 0x0F;  
     sSettings.BPF_CONFIG_1 = 0x1D;
     sSettings.freqHz = 200000;
     sSettings.DEV_CTRL_2 = 0x00;
-    sSettings.BURST_PULSE = 0x08;
+    sSettings.BURST_PULSE = 0x10;
     sSettings.ECHO_INT_CONFIG = 0x19;
 
     TUSS4470_init(&sSettings, tx_buff);

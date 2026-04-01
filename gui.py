@@ -264,7 +264,6 @@ slider_tvg_layout.addWidget(slider_tvg_label)
 slider_tvg_layout.addWidget(slider_tvg)
 
 
-
 # =========================
 # SAVE PNG BUTTON
 # =========================

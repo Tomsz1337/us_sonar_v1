@@ -1,8 +1,10 @@
 import numpy as np
 import pyqtgraph as pg
 from pyqtgraph.Qt import QtWidgets, QtCore
+import pyqtgraph.exporters
 import csv
 import sys
+import os
 
 # =========================
 # PARAMETRY KONFIGURACJI
@@ -42,7 +44,7 @@ def apply_tvg(data, gain_factor=1.0):
 # =========================
 # SET Y TICKS
 # =========================
-def update_yticks(axis, num_ticks):
+def update_image_yticks(axis, num_ticks):
     yticks = [(i * SAMPLE_RESOLUTION, f'{i * SAMPLE_RESOLUTION:.1f}')
               for i in range(0, num_ticks, 35)]
     axis.setTicks([yticks])
@@ -51,7 +53,7 @@ def update_yticks(axis, num_ticks):
 # =========================
 # UPDATE MARKER
 # =========================
-def update_marker_label():
+def update_image_marker_label():
     y_val = marker.value()
     label.setText(f"Y = {y_val:.2f} m")
     label.setPos(MAX_COLS, y_val)
@@ -85,10 +87,23 @@ def update_image():
     img.setLevels([levelLO, levelHI])
     num_visible_samples = view_data.shape[1]
     img.setRect(QtCore.QRectF(0, 0, MAX_COLS, num_visible_samples * SAMPLE_RESOLUTION))
-    update_yticks(plot.getAxis('left'), visible_samples)
-    update_marker_label()
+    update_image_yticks(plot.getAxis('left'), visible_samples)
+    update_image_marker_label()
 
-
+def save_image():
+    
+    base_name = "img"
+    ext = ".png"
+    i = 1
+    while True:
+        filename = f"{base_name}_{i:03d}{ext}"
+        if not os.path.exists(filename):
+            break
+        i += 1
+    exporter = pg.exporters.ImageExporter(plot)
+    exporter.parameters()['width'] = 1000
+    exporter.export(filename)
+    print(f"Saved plot as {filename}")
 # =========================
 # MAIN APP
 # =========================
@@ -119,33 +134,44 @@ img.setLookupTable(cmap.getLookupTable(0.0, 1.0, 256))
 img.setLevels([COLOR_LEVEL_MIN, COLOR_LEVEL_MAX])
 plot.addItem(img)
 
-# Marker + label
+# =========================
+# MARKER
+# =========================
 marker = pg.InfiniteLine(angle=0, movable=True, pen=pg.mkPen('r', width=1))
 label = pg.TextItem(color='r', anchor=(1, 1))
 plot.addItem(marker)
 plot.addItem(label)
-marker.sigPositionChanged.connect(update_marker_label)
+marker.sigPositionChanged.connect(update_image_marker_label)
 
 # Sliders
+slider_x_layout = QtWidgets.QHBoxLayout()
+
 slider_x = QtWidgets.QSlider(QtCore.Qt.Horizontal)
 slider_x.setMinimum(0)
 slider_x.setMaximum(max(0, data.shape[0] - MAX_COLS))
 slider_x.setValue(0)
+slider_x.valueChanged.connect(update_image)
+slider_x_layout.addWidget(slider_x)
+# =========================
+# ZOOM SLIDER
+# =========================
+slider_y_layout = QtWidgets.QVBoxLayout()
+slider_y_label = QtWidgets.QLabel("Zoom\n")
+slider_y_label.setAlignment(QtCore.Qt.AlignCenter)
 
 slider_y = QtWidgets.QSlider(QtCore.Qt.Vertical)
 slider_y.setMinimum(10)
 slider_y.setMaximum(NUM_SAMPLES)
 slider_y.setValue(NUM_SAMPLES)
 
-slider_tvg = QtWidgets.QSlider(QtCore.Qt.Horizontal)
-slider_tvg.setMinimum(10)   
-slider_tvg.setMaximum(50)   
-slider_tvg.setValue(10)     
-
-slider_x.valueChanged.connect(update_image)
 slider_y.valueChanged.connect(update_image)
-slider_tvg.valueChanged.connect(update_image)
 
+slider_y_layout.addWidget(slider_y_label)
+slider_y_layout.addWidget(slider_y)
+
+# =========================
+# COLOR RANGE SLIDERS
+# =========================
 slider_rangeH_layout = QtWidgets.QVBoxLayout()
 slider_rangeH_label = QtWidgets.QLabel("Level\nHI")
 slider_rangeH_label.setAlignment(QtCore.Qt.AlignCenter)
@@ -175,20 +201,45 @@ slider_rangeL.valueChanged.connect(update_image)
 slider_rangeL_layout.addWidget(slider_rangeL_label)
 slider_rangeL_layout.addWidget(slider_rangeL)
 
+# =========================
+# TVG SLIDER
+# =========================
+slider_tvg_layout = QtWidgets.QVBoxLayout()
+slider_tvg_label = QtWidgets.QLabel("TVG")
+slider_tvg_label.setAlignment(QtCore.Qt.AlignCenter)
 
+slider_tvg = QtWidgets.QSlider(QtCore.Qt.Vertical)
+slider_tvg.setMinimum(10)
+slider_tvg.setMaximum(30)
+slider_tvg.setValue(10)
 
-# Plot and marker layout
+slider_tvg.valueChanged.connect(update_image)
+
+slider_tvg_layout.addWidget(slider_tvg_label)
+slider_tvg_layout.addWidget(slider_tvg)
+
+# =========================
+# SAVE PNG BUTTON
+# =========================
+save_button = QtWidgets.QPushButton("Save PNG")
+save_button.clicked.connect(save_image)
+
+# =========================
+# MAIN LAYOUT
+# =========================
 hlayout = QtWidgets.QHBoxLayout()
+hlayout.addWidget(graphics_layout)
+hlayout.addLayout(slider_y_layout)
+hlayout.addLayout(slider_rangeH_layout)
+hlayout.addLayout(slider_rangeL_layout)
+hlayout.addLayout(slider_tvg_layout)
+hlayout.addWidget(save_button)
 vlayout = QtWidgets.QVBoxLayout()
-vlayout.addWidget(graphics_layout)
-vlayout.addWidget(slider_x)
-hlayout.addLayout(vlayout)
-hlayout.addWidget(slider_y)
+vlayout.addLayout(slider_x_layout)
+
 main_layout.addLayout(hlayout)
-main_layout.addWidget(QtWidgets.QLabel("TVG Gain"))
-main_layout.addWidget(slider_tvg)
-hlayout.addWidget(slider_rangeH)
-hlayout.addWidget(slider_rangeL)
+main_layout.addLayout(vlayout)
+
 
 # window settings
 main_win.setWindowTitle("Waterfall plot")

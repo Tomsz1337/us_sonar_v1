@@ -53,6 +53,7 @@ add_subdirectory(mylib)
 target_link_libraries(us_sonar_v1
     pico_stdlib
     mylib
+    hardware_i2c
 )
 pico_add_extra_outputs(us_sonar_v1)
 

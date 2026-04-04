@@ -23,11 +23,12 @@ uint8_t rx_buff[2];
 uint16_t captureBuffer[NUM_SAMPLES];
 
 
-int main() {
+int main() 
+{
     stdio_init_all(); 
     udp_init_HAL();
 
-    //TUSS4470 config////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //TUSS4470 config
     
     tx_buff[0] = 0x00;
     tx_buff[1] = 0x00;
@@ -51,8 +52,7 @@ int main() {
 
     TUSS4470_init(&sSettings, tx_buff);
     printf("TUSS4470 configuration completed.\n");
-    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    
 
     //ADC setup////
     adc_init();
@@ -89,7 +89,7 @@ int main() {
         udp_send_data_HAL("sp\n");  
         udp_send_data_uint16_HAL(captureBuffer, NUM_SAMPLES); 
         udp_send_data_HAL("\n");
-        sleep_ms(100);
+        sleep_ms(35);
     }
     return 1;
 }

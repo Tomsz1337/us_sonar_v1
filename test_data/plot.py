@@ -5,24 +5,23 @@ import pyqtgraph.exporters
 import csv
 import sys
 import os
+from scipy.signal import medfilt
 
 # =========================
-# PARAMETRY KONFIGURACJI
+# CONFIG PARAMETERS
 # =========================
-CSV_FILENAME = 'recorded_data_003.csv'
+CSV_FILENAME = 'fish.csv'
 NUM_SAMPLES = 1000
 MAX_COLS = 300
-SAMPLE_TIME = 20e-6  # 20 µs
+SAMPLE_TIME = 20e-6  
 SPEED_OF_SOUND = 1480  # m/s
 SAMPLE_RESOLUTION = (SPEED_OF_SOUND * SAMPLE_TIME) / 2  
 
 COLOR_LEVEL_MIN = 0
 COLOR_LEVEL_MAX = 2000
 
-
-
 # =========================
-# READ CSV DATA
+# FUNCTION: READ CSV DATA
 # =========================
 def load_data(filename, expected_length):
     data = []
@@ -42,7 +41,23 @@ def apply_tvg(data, gain_factor=1.0):
     return data * gain_vector[:, np.newaxis]
 
 # =========================
-# SET Y TICKS
+# FUNCTION: Cutoff Filter
+# =========================
+def cutoff_flt(data, cutoff_threshold):
+    arr = np.array(data)
+    arr[arr < cutoff_threshold] = 0
+    return arr
+
+# =========================
+# FUNCTION: Median Filter
+# =========================
+def median_flt(data, size):
+    if(size % 2 == 0): size + 1
+    filtered = medfilt(data, kernel_size=size)
+    return filtered
+
+# =========================
+# FUNCTION: SET Y TICKS
 # =========================
 def update_image_yticks(axis, num_ticks):
     yticks = [(i * SAMPLE_RESOLUTION, f'{i * SAMPLE_RESOLUTION:.1f}')
@@ -51,7 +66,7 @@ def update_image_yticks(axis, num_ticks):
 
 
 # =========================
-# UPDATE MARKER
+# FUNCTION: UPDATE MARKER
 # =========================
 def update_image_marker_label():
     y_val = marker.value()
@@ -60,7 +75,7 @@ def update_image_marker_label():
 
 
 # =========================
-# UPDATE IMAGE
+# FUNCTION: UPDATE IMAGE
 # =========================
 def update_image():
     start = slider_x.value()
@@ -70,12 +85,12 @@ def update_image():
     
     levelLO = slider_rangeL.value()
     levelHI = slider_rangeH.value()
-
-    gain_val = slider_tvg.value() / 10.0  # np. 20 → 2.0x
-    data2 = apply_tvg(data.T, gain_val).T
-
+    data2 = cutoff_flt(data, slider_cut.value())
+    gain_val = slider_tvg.value() / 10.0  
+    data3 = apply_tvg(data2.T, gain_val).T
+    data4 = median_flt(data3, slider_med.value())
     visible_samples = slider_y.value()
-    view_data = data2[start:end]
+    view_data = data4[start:end]
 
     if view_data.shape[0] < MAX_COLS:
         padding = np.zeros((MAX_COLS - view_data.shape[0], NUM_SAMPLES))
@@ -121,11 +136,11 @@ main_win.setCentralWidget(central_widget)
 #  plot
 graphics_layout = pg.GraphicsLayoutWidget()
 plot = graphics_layout.addPlot()
-xticks = [(i, str(i - MAX_COLS)) for i in range(0, MAX_COLS + 1, 50)]
+xticks = [(i, str((i - MAX_COLS)*0.1)) for i in range(0, MAX_COLS + 1, 50)]
 plot.getAxis('bottom').setTicks([xticks])
 plot.invertY(True)
-plot.setLabel('bottom', 'Time (Frames)')
-plot.setLabel('left', 'Distance (m)')
+plot.setLabel('bottom', 'Time [s]')
+plot.setLabel('left', 'Distance [m]')
 
 # add image
 img = pg.ImageItem()
@@ -143,7 +158,9 @@ plot.addItem(marker)
 plot.addItem(label)
 marker.sigPositionChanged.connect(update_image_marker_label)
 
-# Sliders
+# =========================
+# DATA SLIDER
+# =========================
 slider_x_layout = QtWidgets.QHBoxLayout()
 
 slider_x = QtWidgets.QSlider(QtCore.Qt.Horizontal)
@@ -168,6 +185,40 @@ slider_y.valueChanged.connect(update_image)
 
 slider_y_layout.addWidget(slider_y_label)
 slider_y_layout.addWidget(slider_y)
+
+# =========================
+# CUTOFF SLIDER
+# =========================
+slider_cut_layout = QtWidgets.QVBoxLayout()
+slider_cut_label = QtWidgets.QLabel("Cutoff\nfilter")
+slider_cut_label.setAlignment(QtCore.Qt.AlignCenter)
+
+slider_cut = QtWidgets.QSlider(QtCore.Qt.Vertical)
+slider_cut.setMinimum(300)
+slider_cut.setMaximum(600)
+slider_cut.setValue(300)
+
+slider_cut.valueChanged.connect(update_image)
+
+slider_cut_layout.addWidget(slider_cut_label)
+slider_cut_layout.addWidget(slider_cut)
+
+# =========================
+# MEDIAN FILTER SLIDER
+# =========================
+slider_med_layout = QtWidgets.QVBoxLayout()
+slider_med_label = QtWidgets.QLabel("Median\nfilter")
+slider_med_label.setAlignment(QtCore.Qt.AlignCenter)
+
+slider_med = QtWidgets.QSlider(QtCore.Qt.Vertical)
+slider_med.setMinimum(1)
+slider_med.setMaximum(5)
+slider_med.setValue(1)
+
+slider_med.valueChanged.connect(update_image)
+
+slider_med_layout.addWidget(slider_med_label)
+slider_med_layout.addWidget(slider_med)
 
 # =========================
 # COLOR RANGE SLIDERS
@@ -233,20 +284,18 @@ hlayout.addLayout(slider_y_layout)
 hlayout.addLayout(slider_rangeH_layout)
 hlayout.addLayout(slider_rangeL_layout)
 hlayout.addLayout(slider_tvg_layout)
+hlayout.addLayout(slider_cut_layout)
+hlayout.addLayout(slider_med_layout)
 hlayout.addWidget(save_button)
+
 vlayout = QtWidgets.QVBoxLayout()
 vlayout.addLayout(slider_x_layout)
 
 main_layout.addLayout(hlayout)
 main_layout.addLayout(vlayout)
 
-
-# window settings
-main_win.setWindowTitle("Waterfall plot")
-
 main_win.show()
 
-# initial values
 marker.setValue(0.0)
 update_image()
 
